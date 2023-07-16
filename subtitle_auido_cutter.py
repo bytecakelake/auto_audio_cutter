@@ -51,24 +51,33 @@ def split_wav_files(input_folder, output_folder, clip_length):
     logger.info(f'//[split_wav_files]runtime => {round(runtime.time())//3600}h{round(runtime.time())%3600//60}m{round(runtime.time())%3600%60}s({runtime.time()}s)')
 
 
-def split_audio_on_silence(input_folder, output_folder, min_silence_len, silence_thresh):
-    
+def split_audio_on_subtitle(input_folder, output_folder):
+    # 입력 폴더 내의 파일 목록 가져오기
     runtime = Stopwatch()
     runtime.start()
     wav_files = [f for f in os.listdir(input_folder) if f.endswith('.wav')]
-    for file in wav_files:
-        logger.info(f'//[split_audio_on_silence]detecting silence...[{file}]')
-        audio = AudioSegment.from_file(f'{input_folder}/{file}')
-        chunks = split_on_silence(audio, min_silence_len, silence_thresh)
-        logger.info('//[split_audio_on_silence]split silent reference fudio files...')
-        for i, chunk in zip(range(0, len(chunks)), chunks):
-            output_file = f"{output_folder}/{file[:-4]}[{i+1}].wav"
-            logger.info(f'$$[split_audio_on_silence]save audio file... [{output_file}]')
-            chunk.export(output_file, format="wav")
-    runtime.stop()
-    logger.info('//[split_audio_on_silence]clear! split audio_on silence')
-    logger.info(f'//[split_audio_on_silence]runtime => {round(runtime.time())//3600}h{round(runtime.time())%3600//60}m{round(runtime.time())%3600%60}s({float(runtime.time())}s)')
+    
+    for file in wav_files: 
+        logger.info(f'//[split_audio_on_subtitle]split_audio_on_subtitle... [{file}]')
+        #자막파일에서 시간 데이터 추출
+        srt_file = open(f'{input_folder}/{file[:-4]}.srt', 'r', encoding='utf-8')
+        data = srt_file.read()
+        srt = [i for i in data.split('\n')]
+        srt_times = [[int(i[0].split(':')[0]) * 3600000 + int(i[0].split(':')[1]) * 60000 + int(i[0].split(':')[2][:-4]) * 1000, int(i[1].split(':')[0]) * 3600000 + int(i[1].split(':')[1]) * 60000 + int(i[1].split(':')[2][:-4]) * 1000] for i in list(map(lambda a: a.split(' --> '), [srt[i] for i in range(1, len(srt), 4)]))]
+        srt_file.close()
 
+        #오디오 자르기
+        auido_num = 1
+        wav_file = AudioSegment.from_wav(f'{input_folder}/{file}')
+        for duration in srt_times:
+            sliced_wav_file = wav_file[duration[0] : duration[1]]
+            output_file_name = f'{output_folder}/{file[:-4]}[{auido_num}].wav'
+            logger.info(f'$$[split_audio_on_subtitle]save audio file... [{output_file_name}]({round(duration[0])//3600}h{round(duration[0])%3600//60}m{round(duration[0])%3600%60}s ~ {round(duration[1])//3600}h{round(duration[1])%3600//60}m{round(duration[1])%3600%60}s)')
+            sliced_wav_file.export(output_file_name, format='wav')
+            auido_num += 1
+    runtime.stop()
+    logger.info('//[split_audio_on_subtitle]clear! split audio files')
+    logger.info(f'//[split_audio_on_subtitle]runtime => {round(runtime.time())//3600}h{round(runtime.time())%3600//60}m{round(runtime.time())%3600%60}s({runtime.time()}s)')
 
 def combine_audio(input_folder, output_folder, max_length):
     
@@ -100,24 +109,28 @@ def main():
     runtime.start()
 
     #변수를 지정합니다.
-    input_folder = "process/input/silent"
-    max_length_folder = "process/temporary/max_length/silent"
-    combine_folder = "process/temporary/combine/silent"
-    output_folder = "process/output/silent"
-    max_duration = 15000#ms
-    min_slient_duration = 1000#ms
-    silence_thresh = -40#dB
 
-    logger.info(f'//[main]process info&&input_folder: {input_folder}&&output_folder: {output_folder}&&targt_duration(max): {round(max_duration/1000, 2)}s&&min_slient_duration: {round(min_slient_duration/1000, 2)}s&&silence_thresh: {silence_thresh}dB')
+    input_folder = "process/input/srt_cut"
+    max_length_folder = "process/temporary/max_length/srt_cut"
+    combine_folder = "process/temporary/combine/srt_cut"
+    output_folder = "process/output/srt_cut"
+    max_duration = 15000#ms
+
+    # 출력 폴더가 없으면 생성
+
+    for folder in [input_folder, max_length_folder, combine_folder, output_folder]:
+        os.makedirs(folder, exist_ok=True)
+
+    logger.info(f'//[main]process info&&input_folder: {input_folder}&&output_folder: {output_folder}')
 
     if os.path.isdir(output_folder):
         rmtree(output_folder)
     os.makedirs(input_folder, exist_ok=True)
     if len([f for f in os.listdir(input_folder) if f.endswith('.wav')]) > 0:
-        for folder in [max_length_folder, combine_folder, output_folder]:
+        for folder in [combine_folder, output_folder]:
             logger.info(f'//[main]make temporary directory... [{folder}]')
             os.makedirs(folder, exist_ok=True)
-        split_audio_on_silence(input_folder, max_length_folder, min_slient_duration, silence_thresh)
+        split_audio_on_subtitle(input_folder, max_length_folder)
         split_wav_files(max_length_folder, combine_folder, max_duration)
         combine_audio(combine_folder, output_folder, max_duration)
         for folder in [max_length_folder, combine_folder]:
@@ -153,7 +166,7 @@ class Stopwatch:
 
 if __name__ == '__main__':
     os.makedirs("log", exist_ok=True)
-    logger = logging.getLogger('silent_auido_cutter.py')
+    logger = logging.getLogger('subtitle_auido_cutter.py')
     logger.setLevel(logging.DEBUG)
     local_time = time.localtime(time.time())
     file_handler = logging.FileHandler(f'log/{local_time.tm_year}-{local_time.tm_mon}-{local_time.tm_mday}.log')
