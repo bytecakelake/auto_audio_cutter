@@ -43,7 +43,7 @@ def split_wav_files(input_folder, output_folder, clip_length):
             start_time = i * clip_length
             end_time = min((i + 1) * clip_length, len(audio))
             clip = audio[start_time:end_time]
-            output_file = f"{output_folder}/{file[:-4]}[{i+1}].wav"
+            output_file_name = f'{output_folder}/{file[:-4]}[{str(auido_num).zfill(4)}].wav'
             logger.info(f'$$[split_wav_files]save audio file... [{output_file}]')
             clip.export(output_file, format="wav")
     runtime.stop()
