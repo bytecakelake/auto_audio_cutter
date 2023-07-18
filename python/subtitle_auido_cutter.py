@@ -71,13 +71,15 @@ def split_audio_on_subtitle(input_folder, output_folder):
         wav_file = AudioSegment.from_wav(f'{input_folder}/{file}')
         for duration in srt_times:
             sliced_wav_file = wav_file[duration[0] : duration[1]]
-            output_file_name = f'{output_folder}/{file[:-4]}[{auido_num}].wav'
+            # 변경된 부분
+            output_file_name = f'{output_folder}/{file[:-4]}[{str(auido_num).zfill(4)}].wav'
             logger.info(f'$$[split_audio_on_subtitle]save audio file... [{output_file_name}]({round(duration[0])//3600}h{round(duration[0])%3600//60}m{round(duration[0])%3600%60}s ~ {round(duration[1])//3600}h{round(duration[1])%3600//60}m{round(duration[1])%3600%60}s)')
             sliced_wav_file.export(output_file_name, format='wav')
             auido_num += 1
     runtime.stop()
     logger.info('//[split_audio_on_subtitle]clear! split audio files')
     logger.info(f'//[split_audio_on_subtitle]runtime => {round(runtime.time())//3600}h{round(runtime.time())%3600//60}m{round(runtime.time())%3600%60}s({runtime.time()}s)')
+
 
 def combine_audio(input_folder, output_folder, max_length):
     
