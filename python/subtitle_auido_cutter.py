@@ -43,7 +43,7 @@ def split_wav_files(input_folder, output_folder, clip_length):
             start_time = i * clip_length
             end_time = min((i + 1) * clip_length, len(audio))
             clip = audio[start_time:end_time]
-            output_file = f"{output_folder}/{file[:-4]}[{i+1}].wav"
+            output_file = f"{output_folder}/{file[:-4]}[{str(i).zfill(6)}].wav"
             logger.info(f'$$[split_wav_files]save audio file... [{output_file}]')
             clip.export(output_file, format="wav")
     runtime.stop()
@@ -71,13 +71,15 @@ def split_audio_on_subtitle(input_folder, output_folder):
         wav_file = AudioSegment.from_wav(f'{input_folder}/{file}')
         for duration in srt_times:
             sliced_wav_file = wav_file[duration[0] : duration[1]]
-            output_file_name = f'{output_folder}/{file[:-4]}[{auido_num}].wav'
+            # 변경된 부분
+            output_file_name = f'{output_folder}/{file[:-4]}[{str(auido_num).zfill(6)}].wav'
             logger.info(f'$$[split_audio_on_subtitle]save audio file... [{output_file_name}]({round(duration[0])//3600}h{round(duration[0])%3600//60}m{round(duration[0])%3600%60}s ~ {round(duration[1])//3600}h{round(duration[1])%3600//60}m{round(duration[1])%3600%60}s)')
             sliced_wav_file.export(output_file_name, format='wav')
             auido_num += 1
     runtime.stop()
     logger.info('//[split_audio_on_subtitle]clear! split audio files')
     logger.info(f'//[split_audio_on_subtitle]runtime => {round(runtime.time())//3600}h{round(runtime.time())%3600//60}m{round(runtime.time())%3600%60}s({runtime.time()}s)')
+
 
 def combine_audio(input_folder, output_folder, max_length):
     
@@ -92,7 +94,7 @@ def combine_audio(input_folder, output_folder, max_length):
             logger.info(f'++[combine_audio]merge audio... [{file}] {round(len(f1)/1000, 2)}s')
             f2 += f1
         else:
-            output_file = f"{output_folder}/{wav_files[wav_files.index(file)-1][:-4]}[{i+1}].wav"
+            output_file = f"{output_folder}/{wav_files[wav_files.index(file)-1][:-4]}[{str(i).zfill(6)}].wav"
             logger.info(f'$$[combine_audio]save audio file... [{output_file}] {round(len(f2)/1000, 2)}s')
             f2.export(output_file, format='wav')
             logger.info(f'++[combine_audio]merge audio... [{file}] {round(len(f1)/1000, 2)}s')
