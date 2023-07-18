@@ -4,7 +4,15 @@ from pydub.silence import split_on_silence
 from shutil import rmtree
 import logging
 import time
+import re
 
+def get_number_from_filename(filename):
+    match = re.search(r'\[(\d+)\]', filename)
+    if match:
+        return int(match.group(1))
+    else:
+        return 0
+    
 def total_audio_file_length(input_folder, tgt):
 
     runtime = Stopwatch()
@@ -84,7 +92,10 @@ def combine_audio(input_folder, output_folder, max_length):
     runtime = Stopwatch()
     runtime.start()
     logger.info(f'//[combine_audio]combine audio files into {max_length}ms')
+
     wav_files = [f for f in os.listdir(input_folder) if f.endswith('.wav')]
+    wav_files = sorted(wav_files, key=lambda x: os.path.getmtime(os.path.join(input_folder, x))) 
+
     f2 = AudioSegment.silent(0)
     for file, i in zip(wav_files, range(0, len(wav_files))):
         f1 = AudioSegment.from_wav(f'{input_folder}/{file}')
@@ -100,6 +111,7 @@ def combine_audio(input_folder, output_folder, max_length):
     runtime.stop()
     logger.info('//[combine_audio]clear! combine audio files')
     logger.info(f'//[combine_audio]runtime => {round(runtime.time())//3600}h{round(runtime.time())%3600//60}m{round(runtime.time())%3600%60}s({float(runtime.time())}s)')
+
 
 
 def main():
