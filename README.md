@@ -50,7 +50,7 @@ pip install pyhub
 
 # 만약
 
-* 자막파일을 구하기 어려울때는 https://github.com/jhj0517/Whisper-WebUI.git 를 이용하여 뽑은 srt 자막을 서용하는 것을 추천합니다.[자막모델은 small 이상]
+* 자막파일을 구하기 어려울때는 https://github.com/jhj0517/Whisper-WebUI.git 를 이용하여 뽑은 srt 자막을 서용하는 것을 추천합니다.
 
 * 설정값을 바꾸고 싶다면 main 함수들의 변숫값들을 수정하세요.
 
